@@ -29,8 +29,8 @@ contract LiniyaZhytta is ILiniyaZhyttya, IOpenVersion {
     IERC20 stakeErc20; 
     IOpenProductCore productManager; 
 
-    string name; 
-    uint256 version; 
+    string name = "LINIYA ZHYTTYA CORE"; 
+    uint256 version = 2; 
 
     uint256 stakeAmount; 
     mapping(address=>mapping(uint256=>uint256)) stakedAmountByRefByServiceProvider; 
@@ -45,6 +45,8 @@ contract LiniyaZhytta is ILiniyaZhyttya, IOpenVersion {
     mapping(string=>uint256[]) refsByStatus; 
 
     mapping(address=>uint256[]) modifiedRefsByAddress; 
+
+    mapping(uint256=>uint256) paidValueByRef;
 
     constructor(address _admin, address openProductCoreAddress, uint256 _stakeAmount, address _erc20) {
         administrator = _admin; 
@@ -125,7 +127,8 @@ contract LiniyaZhytta is ILiniyaZhyttya, IOpenVersion {
         }
         else {
             IERC20 erc20_ = IERC20(erc20Addreess_);
-            erc20_.transferFrom(msg.sender, self, value_);        
+            erc20_.transferFrom(msg.sender, self, value_); 
+            paidValueByRef[_ref] = value_;       
         }
         _purchaseTime = block.timestamp; 
         updateStatus(ref_.id, PAID_STATUS);
@@ -162,7 +165,7 @@ contract LiniyaZhytta is ILiniyaZhyttya, IOpenVersion {
         ref_.status = DELIVERY_CONFIRMED_STATUS;
         updateStatus(_ref, DELIVERY_CONFIRMED_STATUS);
         unstake(ref_.id, ref_.serviceProvider);
-
+        payout(_ref);
         _confirmationTime = block.timestamp; 
         return _confirmationTime; 
     }
@@ -175,6 +178,22 @@ contract LiniyaZhytta is ILiniyaZhyttya, IOpenVersion {
 
 
     // ==================================== INTERNAL =============================================================
+
+    function payout(uint256 _ref) internal returns (bool _paidOut) {
+        uint256 value_ = paidValueByRef[_ref];
+        Ref storage ref_ = refById[_ref];
+        IOpenProduct product_ = IOpenProduct(ref_.product);
+        address erc20Addreess_ = product_.getErc20(); 
+        if(erc20Addreess_ == NATIVE){
+            address payable sp = payable(ref_.serviceProvider);
+            sp.transfer(value_);
+        }
+        else {
+            IERC20 erc20_ = IERC20(erc20Addreess_);
+            erc20_.transfer(ref_.serviceProvider, value_);        
+        }
+        return true; 
+    }
 
     function stake(uint256 _ref) internal returns (bool _staked) {
         stakeErc20.transferFrom(msg.sender, self, stakeAmount);

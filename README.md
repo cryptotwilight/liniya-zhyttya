@@ -7,7 +7,7 @@ Network: CELO (Alfajores Testnet)
 **Core Addresses**
 |Contract       |Address                                    |
 |---------------|-------------------------------------------|
-|LininyaZhyttya | 0x944E625cDc30cd77dA361CB9383693792A284BB0|
+|LininyaZhyttya | 0xA7F576cEf1354661E12c3C41E9CECD7067C89eE8|
 
 
 |Stake Token |Address 									| 
